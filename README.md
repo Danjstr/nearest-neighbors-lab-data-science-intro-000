@@ -70,7 +70,7 @@ Write a function called `parse_trips(trips)` that returns a list of the trips wi
 
 ```python
 def parse_trips(trips):
-    pass
+    return list(map(lambda trip: {'trip_distance': trip['trip_distance'], 'pickup_latitude': trip['pickup_latitude'], 'pickup_longitude': trip['pickup_longitude']},trips))
 ```
 
 
@@ -88,7 +88,7 @@ Now, there's just one change to make.  If you look at one of the trips, all of t
 
 ```python
 def float_values(trips):    
-    pass
+   return list(map(lambda trip: {'trip_distance': float(trip['trip_distance']), 'pickup_latitude': float(trip['pickup_latitude']), 'pickup_longitude': float(trip['pickup_longitude'])},trips))
 ```
 
 
@@ -161,7 +161,7 @@ first_trip
 
 ```python
 def location(trip):
-    pass
+    return [trip['pickup_latitude'], trip['pickup_longitude']]
 ```
 
 
@@ -175,7 +175,7 @@ Ok, now that we can turn a trip into a location, let's turn a location into a ma
 
 ```python
 def to_marker(location):
-    pass
+    return folium.CircleMarker(location, radius = 6)
 ```
 
 
@@ -192,7 +192,8 @@ Ok, now that we know how to produce a single marker, let's write a function to p
 
 ```python
 def markers_from_trips(trips):
-    pass
+    locations = list(map(lambda trip: location(trip), trips))
+    return list(map(lambda location: to_marker(location),locations))
 ```
 
 
@@ -228,7 +229,7 @@ Write a function called `map_from` that, provided the first argument of a list l
 
 ```python
 def map_from(location, zoom_amount):
-    pass
+    return folium.Map(location=location, zoom_start=zoom_amount)
 ```
 
 
@@ -254,7 +255,9 @@ manhattan_map = map_from([40.7589, -73.9851], 13)
 
 ```python
 def add_markers(markers, map_obj):
-    pass
+    for marker in markers:
+        marker.add_to(map_obj)
+    return map_obj
 ```
 
 
@@ -277,8 +280,10 @@ Here we once again apply the nearest neighbors formula. As a first step, write a
 ```python
 import math
 
+
 def distance_location(selected_trip, neighbor_trip):
-    pass
+    distance_squared = (neighbor_trip['pickup_latitude'] - selected_trip['pickup_latitude'])**2 + (neighbor_trip['pickup_longitude'] - selected_trip['pickup_longitude'])**2
+    return math.sqrt(distance_squared)
 ```
 
 
@@ -295,7 +300,9 @@ Ok, next write a function called `distance_between_neighbors` that adds a new ke
 
 ```python
 def distance_between_neighbors(selected_trip, neighbor_trip):
-    pass
+    neighbor_with_distance = neighbor_trip.copy()
+    neighbor_with_distance['distance_from_selected'] = distance_location(selected_trip, neighbor_trip)
+    return neighbor_with_distance
 ```
 
 
@@ -319,7 +326,8 @@ Next, write a function called `distance_all` that provided a list of neighbors, 
 
 ```python
 def distance_all(selected_individual, neighbors):
-    pass
+    remaining_neighbors = filter(lambda neighbor: neighbor != selected_individual, neighbors)
+    return list(map(lambda neighbor: distance_between_neighbors(selected_individual, neighbor), remaining_neighbors))
 ```
 
 
@@ -332,7 +340,9 @@ Now write the nearest neighbors formula to calculate the distance of the `select
 
 ```python
 def nearest_neighbors(selected_trip, trips, number = 3):
-    pass
+    neighbor_distances = distance_all(selected_trip, trips)
+    sorted_neighbors = sorted(neighbor_distances, key=lambda neighbor: neighbor['distance_from_selected'])
+    return sorted_neighbors[:number]
 ```
 
 
